@@ -225,7 +225,6 @@ module.exports = class ColorPicker extends Component {
 			return true
 		},
 		onPanResponderMove: (event, gestureState) => {
-			this.inWheel = true;
 			if (this.props.disabled) return;
 			if (event && event.nativeEvent && typeof event.nativeEvent.preventDefault == 'function') event.nativeEvent.preventDefault()
 			if (event && event.nativeEvent && typeof event.nativeEvent.stopPropagation == 'function') event.nativeEvent.stopPropagation()
@@ -242,7 +241,6 @@ module.exports = class ColorPicker extends Component {
 		},
 		onMoveShouldSetPanResponder: () => true,
 		onPanResponderRelease: (event, gestureState) => {
-			this.inWheel = false;
 			if (this.props.disabled) return;
 			const { nativeEvent } = event
 			const { radius } = this.polar(nativeEvent)
