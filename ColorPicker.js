@@ -168,6 +168,8 @@ module.exports = class ColorPicker extends Component {
 	wheelSize = 0
 	sliderMeasure = {}
 	wheelMeasure = {}
+	wheelPosition = {}
+	sliderPosition = {}
 	wheelWidth = 0
 	static defaultProps = {
 		row: false, // use row or vertical layout
@@ -217,18 +219,30 @@ module.exports = class ColorPicker extends Component {
 			const x = x0 - locationX, y = y0 - locationY
 			this.wheelMeasure.x = x
 			this.wheelMeasure.y = y
+			this.wheelPosition.x = event.nativeEvent.pageX - event.nativeEvent.locationX;
+			this.wheelPosition.y = event.nativeEvent.pageY - event.nativeEvent.locationY;
 			this.props.onInteractionStart();
 			return true
 		},
 		onPanResponderMove: (event, gestureState) => {
+			this.inWheel = true;
 			if (this.props.disabled) return;
 			if (event && event.nativeEvent && typeof event.nativeEvent.preventDefault == 'function') event.nativeEvent.preventDefault()
 			if (event && event.nativeEvent && typeof event.nativeEvent.stopPropagation == 'function') event.nativeEvent.stopPropagation()
-			if (this.outOfWheel(event.nativeEvent) || this.outOfBox(this.wheelMeasure, gestureState)) return;
+			if (this.outOfWheel(event.nativeEvent) || this.outOfBox(this.wheelMeasure, gestureState)) {
+				var closest = this.closestPointOnWheel(
+					{ x: this.wheelPosition.x, y: this.wheelPosition.y },
+					{ x: event.nativeEvent.pageX, y: event.nativeEvent.pageY }
+				)
+				event.nativeEvent.locationX = closest.x - this.wheelPosition.x;
+				event.nativeEvent.locationY = closest.y - this.wheelPosition.y;
+			}
+			//
 			this.wheelMovement(event, gestureState)
 		},
 		onMoveShouldSetPanResponder: () => true,
 		onPanResponderRelease: (event, gestureState) => {
+			this.inWheel = false;
 			if (this.props.disabled) return;
 			const { nativeEvent } = event
 			const { radius } = this.polar(nativeEvent)
@@ -258,6 +272,8 @@ module.exports = class ColorPicker extends Component {
 			const x = x0 - locationX, y = y0 - locationY
 			this.sliderMeasure.x = x
 			this.sliderMeasure.y = y
+			this.sliderPosition.x = event.nativeEvent.pageX - event.nativeEvent.locationX;
+			this.sliderPosition.y = event.nativeEvent.pageY - event.nativeEvent.locationY;			
 			this.props.onInteractionStart();
 			return true
 		},
@@ -265,7 +281,20 @@ module.exports = class ColorPicker extends Component {
 			if (this.props.disabled) return;
 			if (event && event.nativeEvent && typeof event.nativeEvent.preventDefault == 'function') event.nativeEvent.preventDefault()
 			if (event && event.nativeEvent && typeof event.nativeEvent.stopPropagation == 'function') event.nativeEvent.stopPropagation()
-			if (this.outOfSlider(event.nativeEvent) || this.outOfBox(this.sliderMeasure, gestureState)) return;
+			if (this.outOfSlider(event.nativeEvent) || this.outOfBox(this.sliderMeasure, gestureState)) {
+				var x = event.nativeEvent.pageX - this.sliderPosition.x;
+				var y = event.nativeEvent.pageY - this.sliderPosition.y;
+				if (x < 0) x = 0;
+				if (y < 0) y = 0;
+				const { width, height } = this.sliderMeasure
+				if (this.props.row) {
+					event.nativeEvent.locationX = x < 0 ? 0 : this.props.sliderSize;
+					event.nativeEvent.locationY = y > height - width ? height - width : y;
+				} else {
+					event.nativeEvent.locationY = y < 0 ? 0 : this.props.sliderSize;
+					event.nativeEvent.locationX = x > width - height ? width - height : x;
+				}
+			}
 			this.sliderMovement(event, gestureState)
 		},
 		onMoveShouldSetPanResponder: () => true,
@@ -440,6 +469,29 @@ module.exports = class ColorPicker extends Component {
 		const loc = row ? nativeEvent.locationY : nativeEvent.locationX
 		const { width, height } = this.sliderMeasure
 		return 1 - (loc / (row ? height - width : width - height))
+	}
+	closestPointOnWheel(circle, point) {
+		const r = this.wheelSize/2;
+		const cx = circle.x + r;
+		const cy = circle.y + r;
+		const { x: px, y: py } = point;
+	
+		// Vector from the center of the circle to the point P
+		const dx = px - cx;
+		const dy = py - cy;
+	
+		// Distance from the center of the circle to the point P
+		const dist = Math.sqrt(dx * dx + dy * dy);
+	
+		// Normalize the vector (dx, dy)
+		const unitX = dx / dist;
+		const unitY = dy / dist;
+	
+		// Scale the unit vector by the radius to get the closest point on the circle
+		const closestX = cx + unitX * r;
+		const closestY = cy + unitY * r;
+	
+		return { x: closestX, y: closestY };
 	}
 	polar(nativeEvent) {
 		const lx = nativeEvent.locationX, ly = nativeEvent.locationY
