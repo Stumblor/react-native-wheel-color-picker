@@ -290,19 +290,20 @@ module.exports = class ColorPicker extends Component {
 			if (this.props.disabled) return;
 			if (event && event.nativeEvent && typeof event.nativeEvent.preventDefault == 'function') event.nativeEvent.preventDefault()
 			if (event && event.nativeEvent && typeof event.nativeEvent.stopPropagation == 'function') event.nativeEvent.stopPropagation()
+
+			var ev = {
+				nativeEvent: {
+					locationX: event.nativeEvent.locationX,
+					locationY: event.nativeEvent.locationY
+				}
+			}
+
 			if (this.outOfSlider(event.nativeEvent) || this.outOfBox(this.sliderMeasure, gestureState)) {
 				var x = event.nativeEvent.pageX - this.sliderPosition.x;
 				var y = event.nativeEvent.pageY - this.sliderPosition.y;
 				if (x < 0) x = 0;
 				if (y < 0) y = 0;
 				const { width, height } = this.sliderMeasure
-
-				var ev = {
-					nativeEvent: {
-						locationX: event.nativeEvent.locationX,
-						locationY: event.nativeEvent.locationY
-					}
-				}
 
 				try {
 					if (this.props.row) {
