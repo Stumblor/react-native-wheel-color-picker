@@ -228,16 +228,27 @@ module.exports = class ColorPicker extends Component {
 			if (this.props.disabled) return;
 			if (event && event.nativeEvent && typeof event.nativeEvent.preventDefault == 'function') event.nativeEvent.preventDefault()
 			if (event && event.nativeEvent && typeof event.nativeEvent.stopPropagation == 'function') event.nativeEvent.stopPropagation()
+
+			var ev = {
+				nativeEvent: {
+					locationX: event.nativeEvent.locationX,
+					locationY: event.nativeEvent.locationY
+				}
+			}
+
 			if (this.outOfWheel(event.nativeEvent) || this.outOfBox(this.wheelMeasure, gestureState)) {
 				var closest = this.closestPointOnWheel(
 					{ x: this.wheelPosition.x, y: this.wheelPosition.y },
 					{ x: event.nativeEvent.pageX, y: event.nativeEvent.pageY }
 				)
-				event.nativeEvent.locationX = closest.x - this.wheelPosition.x;
-				event.nativeEvent.locationY = closest.y - this.wheelPosition.y;
+				try {
+					ev.nativeEvent.locationX = closest.x - this.wheelPosition.x;
+					ev.nativeEvent.locationY = closest.y - this.wheelPosition.y;
+				}
+				catch (ex) {}
 			}
 			//
-			this.wheelMovement(event, gestureState)
+			this.wheelMovement(ev, gestureState)
 		},
 		onMoveShouldSetPanResponder: () => true,
 		onPanResponderRelease: (event, gestureState) => {
