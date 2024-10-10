@@ -296,15 +296,25 @@ module.exports = class ColorPicker extends Component {
 				if (x < 0) x = 0;
 				if (y < 0) y = 0;
 				const { width, height } = this.sliderMeasure
-				if (this.props.row) {
-					event.nativeEvent.locationX = x < 0 ? 0 : this.props.sliderSize;
-					event.nativeEvent.locationY = y > height - width ? height - width : y;
-				} else {
-					event.nativeEvent.locationY = y < 0 ? 0 : this.props.sliderSize;
-					event.nativeEvent.locationX = x > width - height ? width - height : x;
+
+				var ev = {
+					nativeEvent: {
+						locationX: event.nativeEvent.locationX,
+						locationY: event.nativeEvent.locationY
+					}
 				}
+
+				try {
+					if (this.props.row) {
+						ev.nativeEvent.locationX = x < 0 ? 0 : this.props.sliderSize;
+						ev.nativeEvent.locationY = y > height - width ? height - width : y;
+					} else {
+						ev.nativeEvent.locationY = y < 0 ? 0 : this.props.sliderSize;
+						ev.nativeEvent.locationX = x > width - height ? width - height : x;
+					}
+				} catch(ex) {}
 			}
-			this.sliderMovement(event, gestureState)
+			this.sliderMovement(ev, gestureState)
 		},
 		onMoveShouldSetPanResponder: () => true,
 		onPanResponderRelease: (event, gestureState) => {
